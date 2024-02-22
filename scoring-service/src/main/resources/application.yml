@@ -1,0 +1,7 @@
+server:
+  port: 8091
+
+custom:
+  url:
+    db:
+      get: ${DB_URL_GET:http://localhost:8093/{id}}
