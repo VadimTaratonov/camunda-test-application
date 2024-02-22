@@ -1,0 +1,19 @@
+server:
+  port: 8095
+
+zeebe:
+  client:
+    broker:
+      gateway-address: ${ZEEBE_GATEWAY_ADDRESS:localhost:26500}
+    security:
+      plaintext: true
+
+camunda:
+  operate:
+    pagination:
+      flag: ${PAGINATION_FLAG:false}
+      pagesize: ${PAGINATION_PAGE_SIZE:20}
+    client:
+      username: ${OPERATE_USERNAME:demo}
+      password: ${OPERATE_PASSWORD:demo}
+      url: ${OPERATE_URL:http://localhost:8081}
