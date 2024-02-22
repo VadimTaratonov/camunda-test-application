@@ -1,0 +1,10 @@
+server:
+  port: 8888
+
+custom:
+  url:
+    db:
+      add: ${DB_URL_ADD:http://localhost:8093/add}
+    operate:
+      create: ${OPERATE_URL_CREATE:http://localhost:8095/process-instances}
+  bpmnProcessId: ${BPMN_PROCESS_ID:scoring_process}
