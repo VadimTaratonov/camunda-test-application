@@ -1,0 +1,14 @@
+server:
+  port: 8090
+
+zeebe:
+  client:
+    broker:
+      gateway-address: ${ZEEBE_GATEWAY_ADDRESS:localhost:26500}
+    security:
+      plaintext: true
+custom:
+  url:
+    scoring: ${SCORING_URL:http://localhost:8091/scoring}
+    issue: ${ISSUE_URL:http://localhost:8092/issue}
+

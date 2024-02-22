@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0pmfi4f" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.20.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.4.0">
+  <bpmn:process id="scoring_process" isExecutable="true">
+    <bpmn:extensionElements />
+    <bpmn:serviceTask id="scoring" name="Скоринг заявки">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="worker" />
+        <zeebe:ioMapping>
+          <zeebe:input source="=applicationId" target="applicationId" />
+          <zeebe:input source="=&#34;scoring&#34;" target="operationCode" />
+          <zeebe:output source="=number(result)" target="scoringPoint" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0d9hfpr</bpmn:incoming>
+      <bpmn:outgoing>Flow_1a1m6ev</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:businessRuleTask id="scoring_zone" name="Определение скоринговый зоны">
+      <bpmn:extensionElements>
+        <zeebe:calledDecision decisionId="zone_diagram" resultVariable="scoringZone" />
+        <zeebe:ioMapping>
+          <zeebe:input source="=scoringPoint" target="scoringPoint" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1a1m6ev</bpmn:incoming>
+      <bpmn:outgoing>Flow_0qmsmzk</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="Gateway_09hq60d">
+      <bpmn:incoming>Flow_0qmsmzk</bpmn:incoming>
+      <bpmn:outgoing>Flow_1cof9wl</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1764ygj</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_0qmsmzk" sourceRef="scoring_zone" targetRef="Gateway_09hq60d" />
+    <bpmn:endEvent id="Event_1vk32f2">
+      <bpmn:incoming>Flow_0swl2ro</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1cof9wl" sourceRef="Gateway_09hq60d" targetRef="Activity_0ji2p7o">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=scoringZone="black"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:serviceTask id="issue" name="Выдача кредита">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="worker" />
+        <zeebe:ioMapping>
+          <zeebe:input source="=&#34;result&#34;" target="operationCode" />
+          <zeebe:input source="=applicationId" target="applicationId" />
+          <zeebe:input source="=&#34;issue&#34;" target="scoringResponse" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1764ygj</bpmn:incoming>
+      <bpmn:outgoing>Flow_0p1ga75</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1764ygj" sourceRef="Gateway_09hq60d" targetRef="issue">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=scoringZone="white"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="Event_1mw5lt9">
+      <bpmn:incoming>Flow_0p1ga75</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0p1ga75" sourceRef="issue" targetRef="Event_1mw5lt9" />
+    <bpmn:startEvent id="Event_0z8z3d4">
+      <bpmn:outgoing>Flow_0d9hfpr</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0d9hfpr" sourceRef="Event_0z8z3d4" targetRef="scoring" />
+    <bpmn:sequenceFlow id="Flow_1a1m6ev" sourceRef="scoring" targetRef="scoring_zone" />
+    <bpmn:sequenceFlow id="Flow_0swl2ro" sourceRef="Activity_0ji2p7o" targetRef="Event_1vk32f2" />
+    <bpmn:serviceTask id="Activity_0ji2p7o" name="Отказ в кредите">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="worker" />
+        <zeebe:ioMapping>
+          <zeebe:input source="=&#34;result&#34;" target="operationCode" />
+          <zeebe:input source="=applicationId" target="applicationId" />
+          <zeebe:input source="=&#34;noissue&#34;" target="scoringResponse" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1cof9wl</bpmn:incoming>
+      <bpmn:outgoing>Flow_0swl2ro</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="scoring_process">
+      <bpmndi:BPMNShape id="Activity_1wzhg5e_di" bpmnElement="scoring">
+        <dc:Bounds x="280" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1if58dn_di" bpmnElement="scoring_zone">
+        <dc:Bounds x="430" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_09hq60d_di" bpmnElement="Gateway_09hq60d" isMarkerVisible="true">
+        <dc:Bounds x="575" y="92" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0z8z3d4_di" bpmnElement="Event_0z8z3d4">
+        <dc:Bounds x="152" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1ee1lyq_di" bpmnElement="issue">
+        <dc:Bounds x="700" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1mw5lt9_di" bpmnElement="Event_1mw5lt9">
+        <dc:Bounds x="882" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0cjgaqs_di" bpmnElement="Activity_0ji2p7o">
+        <dc:Bounds x="550" y="190" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1vk32f2_di" bpmnElement="Event_1vk32f2">
+        <dc:Bounds x="582" y="322" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0d9hfpr_di" bpmnElement="Flow_0d9hfpr">
+        <di:waypoint x="188" y="117" />
+        <di:waypoint x="280" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1a1m6ev_di" bpmnElement="Flow_1a1m6ev">
+        <di:waypoint x="380" y="117" />
+        <di:waypoint x="430" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0qmsmzk_di" bpmnElement="Flow_0qmsmzk">
+        <di:waypoint x="530" y="117" />
+        <di:waypoint x="575" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1cof9wl_di" bpmnElement="Flow_1cof9wl">
+        <di:waypoint x="600" y="142" />
+        <di:waypoint x="600" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1764ygj_di" bpmnElement="Flow_1764ygj">
+        <di:waypoint x="625" y="117" />
+        <di:waypoint x="700" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0p1ga75_di" bpmnElement="Flow_0p1ga75">
+        <di:waypoint x="800" y="117" />
+        <di:waypoint x="882" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0swl2ro_di" bpmnElement="Flow_0swl2ro">
+        <di:waypoint x="600" y="270" />
+        <di:waypoint x="600" y="322" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
