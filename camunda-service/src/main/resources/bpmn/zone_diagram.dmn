@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="scoring_zone_definition" name="Определение скоринговой зоны" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.20.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.4.0">
+  <decision id="zone_diagram" name="Выбор скоринговой зоны">
+    <informationRequirement id="InformationRequirement_1o1oucz">
+      <requiredInput href="#InputData_0v5c81d" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_1sfi5u3">
+      <input id="Input_1" label="scoringPoint">
+        <inputExpression id="InputExpression_1" typeRef="number">
+          <text>scoringPoint</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="scoringZone" name="scoringZone" typeRef="string">
+        <outputValues id="UnaryTests_0rw8v9x">
+          <text>"white","black","grey"</text>
+        </outputValues>
+      </output>
+      <rule id="DecisionRule_1yrxvuz">
+        <inputEntry id="UnaryTests_0sp2usc">
+          <text>&lt; 500.0</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1wvc9wz">
+          <text>"black"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0i15392">
+        <inputEntry id="UnaryTests_1p17j3h">
+          <text>&gt;= 500.0</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1h4o9p8">
+          <text>"white"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <inputData id="InputData_0v5c81d" name="scoringPoint" />
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="zone_diagram">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_0nhdjg8" dmnElementRef="InputData_0v5c81d">
+        <dc:Bounds height="45" width="125" x="188" y="288" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_1r06u6o" dmnElementRef="InformationRequirement_1o1oucz">
+        <di:waypoint x="251" y="288" />
+        <di:waypoint x="250" y="200" />
+        <di:waypoint x="250" y="180" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>
