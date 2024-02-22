@@ -1,0 +1,183 @@
+version: '3.9'
+services:
+
+  zeebe:
+    image: camunda/zeebe:latest
+    container_name: zeebe
+    ports:
+      - "26500:26500"
+      - "9600:9600"
+    environment:
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_CLASSNAME=io.camunda.zeebe.exporter.ElasticsearchExporter
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_URL=http://elasticsearch:9200
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_BULK_SIZE=1
+      - ZEEBE_BROKER_DATA_DISKUSAGECOMMANDWATERMARK=0.998
+      - ZEEBE_BROKER_DATA_DISKUSAGEREPLICATIONWATERMARK=0.999
+      - "JAVA_TOOL_OPTIONS=-Xms512m -Xmx512m"
+    restart: always
+    networks:
+      - zeebe_cluster
+    depends_on:
+      - elasticsearch
+
+  operate:
+    image: camunda/operate:latest
+    container_name: operate
+    ports:
+      - "8081:8080"
+    environment:
+      - CAMUNDA_OPERATE_ZEEBE_GATEWAYADDRESS=zeebe:26500
+      - CAMUNDA_OPERATE_ELASTICSEARCH_URL=http://elasticsearch:9200
+      - CAMUNDA_OPERATE_ZEEBEELASTICSEARCH_URL=http://elasticsearch:9200
+    networks:
+      - zeebe_cluster
+    depends_on:
+      - zeebe
+      - elasticsearch
+
+  tasklist:
+    image: camunda/tasklist:latest
+    container_name: tasklist
+    ports:
+      - "8082:8080"
+    environment:
+      - CAMUNDA_TASKLIST_ZEEBE_GATEWAYADDRESS=zeebe:26500
+      - CAMUNDA_TASKLIST_ELASTICSEARCH_URL=http://elasticsearch:9200
+      - CAMUNDA_TASKLIST_ZEEBEELASTICSEARCH_URL=http://elasticsearch:9200
+    networks:
+      - zeebe_cluster
+    depends_on:
+      - zeebe
+      - elasticsearch
+
+  elasticsearch:
+    image: elasticsearch:8.12.1
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - bootstrap.memory_lock=true
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9200/_cat/health | grep -q green" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - zeebe_cluster
+
+  camunda-service:
+    container_name: camunda-service
+    image: camunda-service
+    ports:
+      - "8090:8090"
+    restart: always
+    environment:
+      - ZEEBE_GATEWAY_ADDRESS=zeebe:26500
+      - SCORING_URL=http://scoring-service:8091/scoring
+      - ISSUE_URL=http://issue-service:8092/issue
+    networks:
+      - zeebe_cluster
+    depends_on:
+      - zeebe
+      - operate
+
+  db:
+    image: postgres:16rc1-alpine3.18
+    restart: always
+    container_name: db
+    ports:
+      - "5434:5432"
+    volumes:
+      - C:\logs\camunda:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=camunda_db
+    networks:
+      - zeebe_cluster
+
+  db-service:
+    container_name: db-service
+    image: db-service
+    ports:
+      - "8093:8093"
+    restart: always
+    environment:
+      - DB_URL=jdbc:postgresql://db:5432/camunda_db
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=1234
+    networks:
+      - zeebe_cluster
+    depends_on:
+      - db
+
+  issue-service:
+    container_name: issue-service
+    image: issue-service
+    ports:
+      - "8092:8092"
+    environment:
+      - DB_URL_GET=http://db-service:8093/{id}
+      - DB_URL_PUT=http://db-service:8093/update
+    networks:
+      - zeebe_cluster
+
+  main-service:
+    container_name: main-service
+    image: main-service
+    ports:
+      - "8888:8888"
+    environment:
+      - DB_URL_ADD=http://db-service:8093/add
+      - OPERATE_URL_CREATE=http://operate-service:8095/process-instances
+      - BPMN_PROCESS_ID=scoring_process
+    networks:
+      - zeebe_cluster
+
+  operate-service:
+    container_name: operate-service
+    image: operate-service
+    ports:
+      - "8095:8095"
+    restart: always
+    environment:
+      - zeebe.client.broker.gateway-address=zeebe:26500
+      - PAGINATION_FLAG=false
+      - PAGINATION_PAGE_SIZE=20
+      - OPERATE_USERNAME=demo
+      - OPERATE_PASSWORD=demo
+      - OPERATE_URL=http://operate:8081
+    networks:
+      - zeebe_cluster
+    depends_on:
+      - zeebe
+      - operate
+
+  scoring-service:
+    container_name: scoring-service
+    image: scoring-service
+    ports:
+      - "8091:8091"
+    environment:
+      - DB_URL_GET=http://db-service:8093/{id}
+    networks:
+      - zeebe_cluster
+
+
+networks:
+  zeebe_cluster:
+    driver: bridge
+volumes:
+  zeebe_data:
+  elasticsearch_data:
+    driver: local
